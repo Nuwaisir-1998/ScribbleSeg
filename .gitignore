@@ -1,9 +1,2 @@
-*.*
-!*.ipynb
-!*.py
-!*.gitignore
-! Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Python_Scripts
-! Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Scripts
-!*/Data/
-!*/Data/Human_DLPFC/
-!*/Data/Human_DLPFC/*
+Algorithms
+Outputs
