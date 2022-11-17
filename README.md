@@ -30,3 +30,5 @@ python mclust_scribble_pipeline.py
 ```
 Results will be generated in Outputs directory.
 
+# Other Informations
+The folder 'Supplementary_figures' has the figures of the supplementary information of our research paper
