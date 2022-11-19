@@ -132,31 +132,18 @@ for model in tqdm(models):
         if not os.path.exists(path):
             os.makedirs(path)
 
-    # %%
-    # output_dir = f'Outputs/{sample}/Model_{stepsize_sim}_{stepsize_con}_{stepsize_scr}_seed_{seed}_useDiagLoss_{use_diagonal_loss}'
-    # ! mkdir -p $output_dir
-
-    # make_directory_if_not_exist(f'Outputs/{sample}')
-    # make_directory_if_not_exist(f'Outputs/{sample}/Model_{stepsize_sim}_{stepsize_con}_{stepsize_scr}_seed_{seed}_useDiagLoss_{use_diagonal_loss}')
-    # make_directory_if_not_exist(f'{output_dir}/Pc_15_itrs')
-    # make_directory_if_not_exist(f'{output_dir}/Cluster_labels_15')
-
-    # output_img = f'{output_dir}/result_15_PCs.png'
-    # output_img_eps = f'{output_dir}/result_15_PCs.eps'
     scribble_img = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{dataset}/{sample}/Scribble/manual_scribble_1.npy'
     if mclust_scribble:
         scribble_img = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{dataset}/{sample}/Scribble/mclust_scribble.npy'
     local_data_folder_path = './Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data'
 
     input = f'{npy_path}/mapped_{n_pcs}.npy'
-    # itr_folder = f'{output_dir}/Pc_15_itrs'
     inv_xy = f'{pickle_path}/inv_spot_xy.pickle'
     border = npz_path+'/borders.npz'
     background = npy_path+'/backgrounds.npy'
     foreground = npy_path+'/foregrounds.npy'
     indices_arg = npy_path+'/indices.npy'
     pixel_barcode_map_path = pickle_path+'/pixel_barcode_map.pickle'
-    # cluster_num_path = f'{output_dir}/Cluster_labels_15'
     coordinate_file = f'Data/{dataset}/{sample}/{coordinates_file_name}'
     map_pixel_to_grid_spot_file_path = f'{local_data_folder_path}/{dataset}/{sample}/Jsons/map_pixel_to_grid_spot.json'
     pixel_barcode_file_path = f'{local_data_folder_path}/{dataset}/{sample}/Npys/pixel_barcode.npy'
@@ -216,7 +203,6 @@ for model in tqdm(models):
     class MyNet(nn.Module):
         def __init__(self,input_dim):
             super(MyNet, self).__init__()
-            # print('debug:', input_dim, nChannel)
             self.conv1 = nn.Conv2d(input_dim, intermediate_channels, kernel_size=3, stride=1, padding=1 )
             self.bn1 = nn.BatchNorm2d(intermediate_channels)
             self.conv2 = nn.ModuleList()
@@ -247,8 +233,6 @@ for model in tqdm(models):
     im = np.load(input)
     im.shape
 
-    # %%
-    # print("loaded")
     data = torch.from_numpy( np.array([im.transpose( (2, 0, 1) ).astype('float32')]) ) # z, y, x
     data.shape
 
@@ -275,25 +259,6 @@ for model in tqdm(models):
         matched_count = len(z[z == 0])
         return matched_count / len(labels)
 
-
-    # %% [markdown]
-    # # Test
-
-    # %%
-    # df1 = pd.DataFrame({'label': [3, 2, 2]}, index = ['a', 'b', 'c'])
-    # df2 = pd.DataFrame({'label': [3, 1, 3]}, index = ['b', 'c', 'a'])
-
-    # %%
-    # df = pd.merge(df1, df2, left_index=True, right_index=True)
-    # col1 = df.columns[0]
-    # col2 = df.columns[1]
-    # len(df[df[col1] == df[col2]])
-
-    # %%
-    # compare_with_mclust(df1, df2)
-
-    # %% [markdown]
-    # # Test end
 
     # %%
     # load scribble
@@ -326,15 +291,12 @@ for model in tqdm(models):
                 if mask_inds[i] - mask_inds[i-1] != 1:
                     print("Problem in scribble labels. Not increasing by 1.")
 
-            # inds_sim = torch.from_numpy( np.where( mask_foreground == foreground_val )[ 0 ] ) # Big change done!
-
             # # Take the non-scribbled foreground
             mask_foreground[scr_idx] = background_val
-            inds_sim = torch.from_numpy( np.where( mask_foreground == foreground_val )[ 0 ] ) # Big change done!
+            inds_sim = torch.from_numpy( np.where( mask_foreground == foreground_val )[ 0 ] ) 
 
-            inds_sim_for_mclust = torch.from_numpy( np.where( mask_foreground_and_scr == foreground_val )[ 0 ] ) # Big change done!
+            inds_sim_for_mclust = torch.from_numpy( np.where( mask_foreground_and_scr == foreground_val )[ 0 ] )
 
-            # inds_sim = torch.from_numpy( np.where( mask == background_val )[ 0 ] )
             inds_scr = torch.from_numpy( np.where( mask != background_val )[ 0 ] )
             inds_scr_array = [None for _ in range(mask_inds.shape[0])]
 
@@ -407,17 +369,6 @@ for model in tqdm(models):
     label_colours[6,:] = [0,0,0]
     label_colours[7,:] = [73,182,255]
 
-    # label_colours[0,:] = [127,127,127]
-    # label_colours[1,:] = [0,255,0]
-    # label_colours[2,:] = [255,100,0]
-    # label_colours[3,:] = [255,0,255]
-    # label_colours[4,:] = [255,255,0]
-    # label_colours[5,:] = [0,0,255]
-    # label_colours[6,:] = [255,0,0]
-    # label_colours[7,:] = [255,255,255]
-
-    # backgrounds = set()
-
     loss_comparison = 0
 
     # %%
@@ -429,15 +380,6 @@ for model in tqdm(models):
     down_border = borders['down_border']
     nw_border = borders['nw_border']
     se_border = borders['se_border']
-
-    # %%
-    # indices = np.load(indices_arg, allow_pickle=True)
-
-    # with open(pixel_barcode_map_path, 'rb') as handle:
-    #     pixel_barcode_map = pickle.load(handle)
-
-    # torch.manual_seed(seed)
-    # np.random.seed(seed)
 
     import warnings
     warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
@@ -586,18 +528,10 @@ for model in tqdm(models):
                 print(f'ended pre-heating at {batch_idx}')
                 break
 
-            # return loss_per_itr, loss_without_hyperparam_list, L_sim, L_con, L_scr, mclust_comp
-
-        
 
         if len(mclust_comp) > 0:
             mclust_closeness = pd.DataFrame({'closeness': mclust_comp, 'itr': list(range(len(mclust_comp)))})
             mclust_closeness.to_csv(f'{leaf_output_folder_path}/mclust_closeness.csv')
-
-
-
-
-
 
             
         output = model( data )[ 0 ]
@@ -656,15 +590,6 @@ for model in tqdm(models):
         plt.savefig(f'{leaf_output_folder_path}/{train_type}_seg_{stepsize_sim}_{stepsize_con}_{stepsize_scr}_seed_{seed}_pcs_{n_pcs}.eps',format='eps',dpi=1200,bbox_inches='tight',pad_inches=0)
         plt.close('all')
     
-    # model_path = f'{path_to_pre_heat_model_folder}/mclust_pre_heat_model.pth'
-
-    # if not exists(model_path):
-    #     train_model('pre-heat')
-    #     torch.save(model, model_path)
-    # else:
-    #     print("Loading pre-heated model...")
-    #     model = torch.load(model_path)
-    #     model.eval()
 
     train_model('pre-heat')
     train_model('post-heat')

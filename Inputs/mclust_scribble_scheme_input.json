@@ -16,7 +16,7 @@
     "hyper_sum_division": 1,
     "seed_options": [4],
     "sim_options": [17],
-    "miu_options": [14],
+    "miu_options": [4],
     "niu_options": [1],
     "lr_options": [0.1],
     "samples": ["151507", "151669", "151673"]
