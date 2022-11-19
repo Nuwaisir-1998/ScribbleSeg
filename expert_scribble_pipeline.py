@@ -125,31 +125,18 @@ for model in tqdm(models):
         if not os.path.exists(path):
             os.makedirs(path)
 
-    # %%
-    # output_dir = f'Outputs/{sample}/Model_{stepsize_sim}_{stepsize_con}_{stepsize_scr}_seed_{seed}_useDiagLoss_{use_diagonal_loss}'
-    # ! mkdir -p $output_dir
-
-    # make_directory_if_not_exist(f'Outputs/{sample}')
-    # make_directory_if_not_exist(f'Outputs/{sample}/Model_{stepsize_sim}_{stepsize_con}_{stepsize_scr}_seed_{seed}_useDiagLoss_{use_diagonal_loss}')
-    # make_directory_if_not_exist(f'{output_dir}/Pc_15_itrs')
-    # make_directory_if_not_exist(f'{output_dir}/Cluster_labels_15')
-
-    # output_img = f'{output_dir}/result_15_PCs.png'
-    # output_img_eps = f'{output_dir}/result_15_PCs.eps'
     scribble_img = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{dataset}/{sample}/Scribble/manual_scribble_1.npy'
     if mclust_scribble:
         scribble_img = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{dataset}/{sample}/Scribble/mclust_scribble.npy'
     local_data_folder_path = './Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data'
 
     input = f'{npy_path}/mapped_{n_pcs}.npy'
-    # itr_folder = f'{output_dir}/Pc_15_itrs'
     inv_xy = f'{pickle_path}/inv_spot_xy.pickle'
     border = npz_path+'/borders.npz'
     background = npy_path+'/backgrounds.npy'
     foreground = npy_path+'/foregrounds.npy'
     indices_arg = npy_path+'/indices.npy'
     pixel_barcode_map_path = pickle_path+'/pixel_barcode_map.pickle'
-    # cluster_num_path = f'{output_dir}/Cluster_labels_15'
     coordinate_file = f'Data/{dataset}/{sample}/{coordinates_file_name}'
     map_pixel_to_grid_spot_file_path = f'{local_data_folder_path}/{dataset}/{sample}/Jsons/map_pixel_to_grid_spot.json'
     pixel_barcode_file_path = f'{local_data_folder_path}/{dataset}/{sample}/Npys/pixel_barcode.npy'
@@ -208,7 +195,6 @@ for model in tqdm(models):
     class MyNet(nn.Module):
         def __init__(self,input_dim):
             super(MyNet, self).__init__()
-            # print('debug:', input_dim, nChannel)
             self.conv1 = nn.Conv2d(input_dim, intermediate_channels, kernel_size=3, stride=1, padding=1 )
             self.bn1 = nn.BatchNorm2d(intermediate_channels)
             self.conv2 = nn.ModuleList()
@@ -240,7 +226,6 @@ for model in tqdm(models):
     im.shape
 
     # %%
-    # print("loaded")
     data = torch.from_numpy( np.array([im.transpose( (2, 0, 1) ).astype('float32')]) ) # z, y, x
     data.shape
 
@@ -325,8 +310,6 @@ for model in tqdm(models):
         nChannel = last_layer_channel_count
 
 
-    # %%
-    data.shape
 
     # %%
     # train
@@ -350,12 +333,10 @@ for model in tqdm(models):
 
     HPy_target = torch.zeros(im.shape[0] - 1, im.shape[1], nChannel)
     HPz_target = torch.zeros(im.shape[0], im.shape[1] - 1, nChannel)
-    #extra
     HP_diag_target = torch.zeros(im.shape[0] - 1, im.shape[1] - 1, nChannel)
     if use_cuda:
         HPy_target = HPy_target.cuda()
         HPz_target = HPz_target.cuda()
-        #extra
         HP_diag_target = HP_diag_target.cuda()
         
     optimizer = optim.SGD(model.parameters(), lr=lr, momentum=0.9)
@@ -370,17 +351,6 @@ for model in tqdm(models):
     label_colours[6,:] = [0,0,0]
     label_colours[7,:] = [73,182,255]
 
-    # label_colours[0,:] = [127,127,127]
-    # label_colours[1,:] = [0,255,0]
-    # label_colours[2,:] = [255,100,0]
-    # label_colours[3,:] = [255,0,255]
-    # label_colours[4,:] = [255,255,0]
-    # label_colours[5,:] = [0,0,255]
-    # label_colours[6,:] = [255,0,0]
-    # label_colours[7,:] = [255,255,255]
-
-    # backgrounds = set()
-
     loss_comparison = 0
 
     # %%
@@ -393,25 +363,11 @@ for model in tqdm(models):
     nw_border = borders['nw_border']
     se_border = borders['se_border']
 
-    # %%
-    # indices = np.load(indices_arg, allow_pickle=True)
-
-    # with open(pixel_barcode_map_path, 'rb') as handle:
-    #     pixel_barcode_map = pickle.load(handle)
-
-    # torch.manual_seed(seed)
-    # np.random.seed(seed)
-
     import warnings
     warnings.simplefilter(action='ignore', category=pd.errors.PerformanceWarning)
 
-
     loss_list = []
-    # loss_comparison_list = []
     loss_without_hyperparam_list = []
-
-    const_factor = 1000.0
-
 
     for batch_idx in (range(max_iter)):
 
@@ -460,12 +416,6 @@ for model in tqdm(models):
         df_labels = pd.DataFrame({'label': labels}, index=pixel_barcode[pixel_barcode != ''])
         ari_per_itr.append(calc_ari(df_man, df_labels))
         df_barcode_labels_per_itr[f'itr_{batch_idx}'] = labels
-        
-        # if len(np.unique(labels)) < no_of_scribble_layers:
-        #     print(f"Lesser amount of labels detected at iteration {batch_idx}!")
-        # elif len(np.unique(labels)) > no_of_scribble_layers:
-        #     print(f"Higher amount of labels detected at iteration {batch_idx}!")
-        
 
         if visualize and (batch_idx<10 or batch_idx%10 == 0):
         
@@ -485,8 +435,6 @@ for model in tqdm(models):
 
     
             loss_lr = 0
-            # for layer_idxs in inds_scr_array:
-            #     loss_lr += loss_fn_scr(output[ layer_idxs ], target_scr[ layer_idxs ]) # *************** Check this part ****************
             for i in range(mask_inds.shape[0]):
                 loss_lr += loss_fn_scr(output[ inds_scr_array[i] ], target_scr[ inds_scr_array[i] ])
 
@@ -497,10 +445,8 @@ for model in tqdm(models):
             con_multiplier = 1
             scr_multiplier = 1
             L_sim = stepsize_sim * loss_sim * sim_multiplier
-            #L_con = stepsize_con * (lhpy + lhpz) * con_multiplier
             L_scr = stepsize_scr * loss_lr * scr_multiplier
 
-            #extra
             L_con = stepsize_con * (lhpy + lhpz + lhp_diag) * con_multiplier
             loss_without_hyperparam = loss_sim + loss_lr + (lhpy + lhpz + lhp_diag)
 
@@ -510,10 +456,7 @@ for model in tqdm(models):
                 loss = (L_sim + L_con + L_scr)
 
         else:
-            loss = (stepsize_sim * loss_fn(output, target) + stepsize_con * (lhpy + lhpz + lhp_diag))
-            # loss = (stepsize_sim * loss_fn(output, target) + stepsize_con * (lhpy + lhpz + lhp_diag)) / (stepsize_sim + stepsize_scr + stepsize_con )
-
-            # loss_list.append(loss.data.cpu().numpy())
+            loss = (stepsize_sim * loss_fn(output, target) + stepsize_con * (lhpy + lhpz + lhp_diag)) # consider hyperparameter sum division later
 
         loss_without_hyperparam_list.append(loss_without_hyperparam.data.cpu().numpy())
         loss_per_itr.append(loss.data.cpu().numpy())
@@ -521,9 +464,6 @@ for model in tqdm(models):
 
         loss.backward()
         optimizer.step()
-
-    # %% [markdown]
-    # # Results
 
     # %%
     output = model( data )[ 0 ]
@@ -541,9 +481,6 @@ for model in tqdm(models):
     else: rad = 10
     plt.scatter(s[:, 1], 1000 - s[:, 0], c=colors, s = rad)
 
-    # %%
-    # save final output image()
-    # save final output image()
     output = model( data )[ 0 ]
     output = output.permute( 1, 2, 0 ).contiguous().view( -1, nChannel )
     ignore, target = torch.max( output, 1 )
@@ -551,8 +488,6 @@ for model in tqdm(models):
     im_target_rgb = np.array([label_colours[ c % nChannel ] for c in im_target])
     im_target_rgb = im_target_rgb.reshape( np.array([im.shape[0],im.shape[1],3]).astype( np.uint8 ))
     im_cluster_num = im_target.reshape(im.shape[0], im.shape[1])
-    # pixel_barcode = np.load(pixel_barcode_file_path)
-    # pixel_rows_cols = np.argwhere(pixel_barcode != '')
     labels = im_cluster_num[pixel_rows_cols[:, 0], pixel_rows_cols[:, 1]]
     grid_spots, colors = get_grid_spots_from_pixels(pixel_rows_cols, labels)
 

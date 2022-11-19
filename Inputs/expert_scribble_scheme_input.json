@@ -3,7 +3,7 @@
     "dataset": "Human_DLPFC",
     "n_pcs": 15,
     "scribble": 1,
-    "expert_scribble": 0,
+    "expert_scribble": 1,
     "nChannel": 100,
     "max_iter": 300,
     "nConv": 2,
