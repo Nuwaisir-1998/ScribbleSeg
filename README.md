@@ -11,6 +11,9 @@ These lines ensure reproducible results
 
 Python version: 3.10.6
 
+# Input
+Set the input parameters in Inputs/[file_name].json
+
 # How to run?
 At first you have to run preprocessor.py. For expert scribble scheme run the following:
 ```
