@@ -25,34 +25,47 @@ from os.path import exists
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-# %%
-# dataset = 'Custom'
-# sample = 'Small_3'
-# n_pcs = 2
-dataset = 'Human_DLPFC'
-sample = '151676'
-n_pcs = 15
 
-# %%
-use_diagonal_loss = True
+import json
+
+import argparse
+
+parser = argparse.ArgumentParser(description='ScribbleSeg expert annotation pipeline')
+parser.add_argument('--params', help="The input parameters json file path", required=True)
+
+args = parser.parse_args()
+
+with open(args.params) as f:
+   params = json.load(f)
+test_folder_base_name = params['test_folder_base_name']
+dataset = params['dataset']
+n_pcs = params['n_pcs']
+scribble = params['scribble']
+expert_scribble = params['expert_scribble']
+mclust_pre_heat = params['mclust_pre_heat']
+pre_heat_max_iter = params['pre_heat_max_iter']
+nChannel = params['nChannel']
+max_iter = params['max_iter']
+nConv = params['nConv']
+visualize = params['visualize']
+use_background_scribble = params['use_background_scribble']
+added_layers = params['added_layers']
+last_layer_channel_count = params['last_layer_channel_count']
+hyper_sum_division = params['hyper_sum_division']
+seed_options = params['seed_options']
+sim_options = params['sim_options']
+miu_options = params['miu_options']
+niu_options = params['niu_options']
+lr_options = params['lr_options']
 
 use_cuda = torch.cuda.is_available()
-scribble = True
-expert_scribble = False
+
+if use_cuda:
+    print("GPU available")
+else:
+    print("GPU not available")
+
 mclust_scribble = not expert_scribble
-mclust_pre_heat = True
-nChannel = 100
-maxIter = 300
-pre_heat_maxIter = 10000
-minLabels = -1 # will be assigned to the number of different scribbles used
-lr = 0.1
-nConv = 2
-visualize = 0
-# stepsize_sim = 15
-# stepsize_con = 1
-# stepsize_scr = 0
-# seed = random.randint(0, 90000)
-seed = 4
 use_background_scribble = False
 if scribble:
     if expert_scribble: scheme = 'Expert_scribble'
@@ -62,26 +75,16 @@ if scribble:
         else: scheme = 'Mclust_scribble_normal'
     else: scheme = 'Other_scribble'
 else: scheme = 'No_scribble'
+
 added_layers = 0
-last_layer_channel_count = 100
 intermediate_channels = n_pcs # was n_pcs
 hyper_sum_division = True
 meta_data_index = ['test_name', 'seed', 'dataset', 'sample', 'n_pcs', 'scribble', 'max_iter', 'sim', 'miu', 'niu', 'scheme', 'lr', 'nConv', 'no_of_scribble_layers', 'intermediate_channels', 'added_layers', 'last_layer_channel_count', 'hyper_sum_division']
 
-# %% [markdown]
-
-test_name = f'Seed_test_final_Mclust_init_with_hyper_sum_with_gpu_itr_{maxIter}'
-
+test_name = f'{test_folder_base_name}_itr_{max_iter}'
 # seed_options = pd.read_csv('./Data/seed_list.csv')['seeds'].values
 
-seed_options = [4]
-sim_options = list(range(17, 18, 1))
-miu_options = list(range(4, 5, 1))
-niu_options = list(range(0, 1, 1))
-lr_options = [0.1]
-
-samples = ['151507', '151508', '151509', '151510', '151669', '151670', '151671', '151672', '151673', '151674', '151675', '151676']
-# samples = ['151507', '151669', '151673']
+samples = params['samples']
 
 models = []
 for sample in samples:
@@ -442,7 +445,7 @@ for model in tqdm(models):
     stepsize_sim_orig = stepsize_sim
     stepsize_con_orig = stepsize_con
     stepsize_scr_orig = stepsize_scr
-    maxIter_orig = maxIter
+    max_iter_orig = max_iter
 
     def train_model(train_type):
         assert(train_type == 'pre-heat' or train_type == 'post-heat')
@@ -450,13 +453,13 @@ for model in tqdm(models):
             stepsize_scr = 1
             stepsize_sim = 0
             stepsize_con = 0
-            maxIter = pre_heat_maxIter
+            max_iter = pre_heat_max_iter
         else:
             stepsize_sim = stepsize_sim_orig
             stepsize_con = stepsize_con_orig
             # stepsize_scr = 0
             stepsize_scr = stepsize_scr_orig
-            maxIter = maxIter_orig
+            max_iter = max_iter_orig
 
         loss_list = []
         # loss_comparison_list = []
@@ -466,7 +469,7 @@ for model in tqdm(models):
         const_factor = 1000.0
         end_pre_heating = False
 
-        for batch_idx in (range(maxIter)):
+        for batch_idx in (range(max_iter)):
 
             # forwarding
             optimizer.zero_grad()   # ******************** check ********************
@@ -639,7 +642,7 @@ for model in tqdm(models):
         print(f"{train_type}_Total loss: {loss_per_itr[-1]}")
         print(f"{train_type}_Loss without hyperparam: {loss_without_hyperparam_list[-1]}")
 
-        meta_data_value = [test_name, seed, dataset, sample, n_pcs, scribble, maxIter, stepsize_sim, stepsize_con, stepsize_scr, scheme, lr, nConv, no_of_scribble_layers, intermediate_channels, added_layers, last_layer_channel_count, hyper_sum_division]
+        meta_data_value = [test_name, seed, dataset, sample, n_pcs, scribble, max_iter, stepsize_sim, stepsize_con, stepsize_scr, scheme, lr, nConv, no_of_scribble_layers, intermediate_channels, added_layers, last_layer_channel_count, hyper_sum_division]
         df_meta_data = pd.DataFrame(index=meta_data_index, columns=[f'{train_type}_value'])
         df_meta_data[f'{train_type}_value'][meta_data_index] = meta_data_value
         df_meta_data.to_csv(f'{leaf_output_folder_path}/{train_type}_meta_data.csv')
