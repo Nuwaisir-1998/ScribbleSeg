@@ -24,10 +24,16 @@ import random
 torch.backends.cudnn.deterministic = True
 torch.backends.cudnn.benchmark = False
 
-
 import json
 
-with open('./Inputs/expert_scribble_scheme_input.json') as f:
+import argparse
+
+parser = argparse.ArgumentParser(description='ScribbleSeg expert annotation pipeline')
+parser.add_argument('--params', help="The input parameters json file path", required=True)
+
+args = parser.parse_args()
+
+with open(args.params) as f:
    params = json.load(f)
 test_folder_base_name = params['test_folder_base_name']
 dataset = params['dataset']

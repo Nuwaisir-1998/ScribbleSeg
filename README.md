@@ -22,11 +22,11 @@ python preprocessor.py --scheme mclust
 ```
 Then, to generate the segmentations for expert scribble scheme, run:
 ```
-python expert_scribble_pipeline.py
+python expert_scribble_pipeline.py --params ./Inputs/expert_scribble_scheme_input.json
 ```
 Or, to generate the segmentations for mclust scribble scheme, run:
 ```
-python mclust_scribble_pipeline.py
+python expert_scribble_pipeline.py --params ./Inputs/mclust_scribble_scheme_input.json
 ```
 Results will be generated in Outputs directory.
 

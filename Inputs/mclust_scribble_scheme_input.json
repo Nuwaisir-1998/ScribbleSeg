@@ -1,0 +1,21 @@
+{
+    "test_folder_base_name": "Final_seed_test_expert_scr_init_with_hyper_sum_with_gpu",
+    "dataset": "Human_DLPFC",
+    "n_pcs": 15,
+    "scribble": 1,
+    "expert_scribble": 1,
+    "nChannel": 100,
+    "max_iter": 300,
+    "nConv": 2,
+    "visualize": 0,
+    "use_background_scribble": 0,
+    "added_layers": 0,
+    "last_layer_channel_count": 100,
+    "hyper_sum_division": 1,
+    "seed_options": [4],
+    "sim_options": [3],
+    "miu_options": [10],
+    "niu_options": [1],
+    "lr_options": [0.1],
+    "samples": ["151507", "151669", "151673"]
+}
