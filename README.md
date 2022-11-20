@@ -15,6 +15,10 @@ Python version: 3.10.6
 Set the input parameters in Inputs/[file_name].json
 
 # How to run?
+First set your environment by running:
+```
+conda env create -f environment.yml
+```
 At first you have to run preprocessor.py. For expert scribble scheme run the following:
 ```
 python preprocessor.py --scheme expert
