@@ -14,6 +14,9 @@ Python version: 3.10.6
 # Input
 Set the input parameters in Inputs/[file_name].json
 
+# How to generate scribbles?
+Scribbles can be generated using [Loupe browser](https://support.10xgenomics.com/single-cell-gene-expression/software/visualization/latest/what-is-loupe-cell-browser)
+
 # How to run?
 First set your environment by running:
 ```
