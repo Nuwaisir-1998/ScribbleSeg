@@ -17,7 +17,7 @@
     "seed_options": [4],
     "sim_options": [17],
     "miu_options": [4],
-    "niu_options": [1],
+    "niu_options": [0],
     "lr_options": [0.1],
     "samples": ["151507", "151669", "151673"]
 }
