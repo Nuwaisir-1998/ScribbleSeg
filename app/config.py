@@ -4,6 +4,32 @@ import json
 import torch
 
 class Config:
+    test_folder_base_name = None
+    dataset = None
+    n_pcs = None
+    scribble = None
+    expert_scribble = None
+    nChannel = None
+    max_iter = None
+    nConv = None
+    visualize = None
+    use_background_scribble = None
+    added_layers = None
+    last_layer_channel_count = None
+    hyper_sum_division = None
+    seed_options = None
+    sim_options = None
+    miu_options = None
+    niu_options = None
+    lr_options = None
+    samples = None
+    use_cuda = None
+    mclust_scribble = None
+    minLabels = None
+    intermediate_channels = None
+    meta_data_index = None
+    test_name = None
+
     def __init__(self):
         parser = argparse.ArgumentParser(description='ScribbleSeg expert annotation pipeline')
         parser.add_argument('--params', help="The input parameters json file path", required=True)
@@ -38,7 +64,7 @@ class Config:
 
         self.minLabels = -1 # will be assigned to the number of different scribbles used
 
-        self.intermediate_channels = n_pcs # was n_pcs
+        self.intermediate_channels = self.n_pcs # was n_pcs
 
         self.meta_data_index = ['test_name', 'seed', 'dataset', 'sample', 'n_pcs', 'scribble', 'max_iter', 'sim', 'miu', 'niu', 'scheme', 'lr', 'nConv', 'no_of_scribble_layers', 'intermediate_channels', 'added_layers', 'last_layer_channel_count', 'hyper_sum_division']
 
