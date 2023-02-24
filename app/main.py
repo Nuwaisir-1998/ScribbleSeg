@@ -1,6 +1,7 @@
 from init import *
 from config import *
 from modelbuilder import BruitForceModelBuilder
+from pathbuilder import PathBuilder
 
 # Load Config
 config = Config()
@@ -19,57 +20,25 @@ for model in tqdm(models):
 
     print(model)
 
-    npz_path = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{Config.dataset}/{model.sample}/Npzs'
-    npy_path = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{Config.dataset}/{model.sample}/Npys'
-    pickle_path = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{Config.dataset}/{model.sample}/Pickles'
-    coordinates_file_name = 'coordinates.csv'
+    pathBuilder = PathBuilder(model)
+    paths = pathBuilder.buildPath()
 
     # %%
-    def make_directory_if_not_exist(path):
-        if not os.path.exists(path):
-            os.makedirs(path)
-
-    scribble_img = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{Config.dataset}/{model.sample}/Scribble/manual_scribble_1.npy'
-    if Config.mclust_scribble:
-        scribble_img = f'Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data/{Config.dataset}/{model.sample}/Scribble/Config.mclust_scribble.npy'
-    local_data_folder_path = './Algorithms/Unsupervised_Segmentation/Approaches/With_Scribbles/Local_Data'
-
-    input = f'{npy_path}/mapped_{Config.n_pcs}.npy'
-    inv_xy = f'{pickle_path}/inv_spot_xy.pickle'
-    border = npz_path+'/borders.npz'
-    background = npy_path+'/backgrounds.npy'
-    foreground = npy_path+'/foregrounds.npy'
-    indices_arg = npy_path+'/indices.npy'
-    pixel_barcode_map_path = pickle_path+'/pixel_barcode_map.pickle'
-    coordinate_file = f'Data/{Config.dataset}/{model.sample}/{coordinates_file_name}'
-    map_pixel_to_grid_spot_file_path = f'{local_data_folder_path}/{Config.dataset}/{model.sample}/Jsons/map_pixel_to_grid_spot.json'
-    pixel_barcode_file_path = f'{local_data_folder_path}/{Config.dataset}/{model.sample}/Npys/pixel_barcode.npy'
-    manual_annotation_file_path = f'./Data/{Config.dataset}/{model.sample}/manual_annotations.csv'
-
-    output_folder_path = f'./Outputs/{Config.test_name}/{Config.dataset}/{model.sample}'
-    leaf_output_folder_path = f'{output_folder_path}/{Config.scheme}/{Config.n_pcs}_pcs/Seed_{model.seed}/Lr_{model.lr}/Hyper_{model.stepsize_sim}_{model.stepsize_con}_{model.stepsize_scr}'
-    labels_per_itr_folder_path = f'{leaf_output_folder_path}/Labels_per_itr/'
-    image_per_itr_folder_path = f'{leaf_output_folder_path}/Image_per_itr/'
-    meta_data_file_path = f'{leaf_output_folder_path}/meta_data.csv'
-
-    # %%
-    pixel_barcode = np.load(pixel_barcode_file_path)
+    pixel_barcode = np.load(paths.pixel_barcode_file_path)
     pixel_rows_cols = np.argwhere(pixel_barcode != '')
-    df_man = pd.read_csv(manual_annotation_file_path, index_col=0)
+    df_man = pd.read_csv(paths.manual_annotation_file_path, index_col=0)
     manual_annotation_labels = df_man['label'].values
     ari_per_itr = []
     loss_per_itr = []
     df_barcode_labels_per_itr = pd.DataFrame(index = pixel_barcode[pixel_barcode != ''])
-    backgrounds = np.load(background)
-    foregrounds = np.load(foreground)
+    backgrounds = np.load(paths.background)
+    foregrounds = np.load(paths.foreground)
 
     # %%
-    make_directory_if_not_exist(output_folder_path)
-    make_directory_if_not_exist(labels_per_itr_folder_path)
-    make_directory_if_not_exist(image_per_itr_folder_path)
+    
 
     # %%
-    with open(map_pixel_to_grid_spot_file_path, 'r') as f:
+    with open(paths.map_pixel_to_grid_spot_file_path, 'r') as f:
         map_pixel_to_grid_spot = json.load(f)
 
     # %%
@@ -152,7 +121,7 @@ for model in tqdm(models):
     # %%
     # load scribble
     if Config.scribble:
-        mask = np.load(scribble_img)
+        mask = np.load(paths.scribble_img)
         foreground_val = 1000
         background_val = 255
         mask = relabel_mask(mask.copy(), background_val)
@@ -258,7 +227,7 @@ for model in tqdm(models):
     loss_comparison = 0
 
     # %%
-    borders = np.load(border)
+    borders = np.load(paths.border)
 
     right_border = borders['right_border']
     left_border = borders['left_border']
@@ -331,7 +300,7 @@ for model in tqdm(models):
             plt.figure(figsize=(5.5,5))
             plt.scatter(grid_spots[:, 1], 1000 - grid_spots[:, 0], c=colors, s=rad)
             plt.axis('off')
-            plt.savefig(f'{image_per_itr_folder_path}/itr_{batch_idx}.png',format='png',dpi=1200,bbox_inches='tight',pad_inches=0)
+            plt.savefig(f'{paths.image_per_itr_folder_path}/itr_{batch_idx}.png',format='png',dpi=1200,bbox_inches='tight',pad_inches=0)
             plt.close('all')
 
         # loss 
@@ -396,21 +365,21 @@ for model in tqdm(models):
     grid_spots, colors = get_grid_spots_from_pixels(pixel_rows_cols, labels)
 
     df_ari_per_itr = pd.DataFrame({'ARI': ari_per_itr})
-    df_ari_per_itr.to_csv(f'{leaf_output_folder_path}/ari_per_itr.csv')
+    df_ari_per_itr.to_csv(f'{paths.leaf_output_folder_path}/ari_per_itr.csv')
 
     df_loss_per_itr = pd.DataFrame({'Loss': loss_per_itr})
-    df_loss_per_itr.to_csv(f'{leaf_output_folder_path}/loss_per_itr.csv')
+    df_loss_per_itr.to_csv(f'{paths.leaf_output_folder_path}/loss_per_itr.csv')
 
     df_loss_without_hyperparam_per_itr = pd.DataFrame({'Loss_without_hyperparam': loss_without_hyperparam_list})
-    df_loss_without_hyperparam_per_itr.to_csv(f'{leaf_output_folder_path}/loss_without_hyperparam_per_itr.csv')
+    df_loss_without_hyperparam_per_itr.to_csv(f'{paths.leaf_output_folder_path}/loss_without_hyperparam_per_itr.csv')
 
     df_labels = pd.DataFrame({'label': labels}, index=pixel_barcode[pixel_barcode != ''])
-    df_labels.to_csv(f'{leaf_output_folder_path}/final_barcode_labels.csv')
+    df_labels.to_csv(f'{paths.leaf_output_folder_path}/final_barcode_labels.csv')
 
     df_final_metrics = pd.DataFrame({'ARI': df_ari_per_itr['ARI'].values[-1:], 'Loss': df_loss_per_itr['Loss'].values[-1:], 'Loss_without_hyperparam': df_loss_without_hyperparam_per_itr['Loss_without_hyperparam'].values[-1:]})
-    df_final_metrics.to_csv(f'{leaf_output_folder_path}/final_metrics.csv')
+    df_final_metrics.to_csv(f'{paths.leaf_output_folder_path}/final_metrics.csv')
 
-    df_barcode_labels_per_itr.to_csv(f'{leaf_output_folder_path}/barcode_labels_per_itr.csv')
+    df_barcode_labels_per_itr.to_csv(f'{paths.leaf_output_folder_path}/barcode_labels_per_itr.csv')
 
     print("ARI:", calc_ari(df_man, df_labels))
     print(f"L_sim: {L_sim}, L_con: {L_con}, L_scr: {L_scr}")
@@ -421,15 +390,15 @@ for model in tqdm(models):
     meta_data_value = [Config.test_name, model.seed, Config.dataset, model.sample, Config.n_pcs, Config.scribble, Config.max_iter, model.stepsize_sim, model.stepsize_con, model.stepsize_scr, Config.scheme, model.lr, Config.nConv, no_of_scribble_layers, Config.intermediate_channels, Config.added_layers, last_layer_channel_count, Config.hyper_sum_division]
     df_meta_data = pd.DataFrame(index=Config.meta_data_index, columns=['value'])
     df_meta_data['value'][Config.meta_data_index] = meta_data_value
-    df_meta_data.to_csv(meta_data_file_path)
+    df_meta_data.to_csv(paths.meta_data_file_path)
 
     if Config.dataset == 'Custom': rad = 700
     else: rad = 10
     plt.figure(figsize=(5.5,5))
     plt.axis('off')
     plt.scatter(grid_spots[:, 1], 1000 - grid_spots[:, 0], c=colors, s=rad)
-    plt.savefig(f'{leaf_output_folder_path}/seg_{model.stepsize_sim}_{model.stepsize_con}_{model.stepsize_scr}_seed_{model.seed}_pcs_{Config.n_pcs}.png',format='png',dpi=1200,bbox_inches='tight',pad_inches=0)
-    plt.savefig(f'{leaf_output_folder_path}/seg_{model.stepsize_sim}_{model.stepsize_con}_{model.stepsize_scr}_seed_{model.seed}_pcs_{Config.n_pcs}.eps',format='eps',dpi=1200,bbox_inches='tight',pad_inches=0)
+    plt.savefig(f'{paths.leaf_output_folder_path}/seg_{model.stepsize_sim}_{model.stepsize_con}_{model.stepsize_scr}_seed_{model.seed}_pcs_{Config.n_pcs}.png',format='png',dpi=1200,bbox_inches='tight',pad_inches=0)
+    plt.savefig(f'{paths.leaf_output_folder_path}/seg_{model.stepsize_sim}_{model.stepsize_con}_{model.stepsize_scr}_seed_{model.seed}_pcs_{Config.n_pcs}.eps',format='eps',dpi=1200,bbox_inches='tight',pad_inches=0)
 
     plt.close('all')
 
