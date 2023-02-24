@@ -29,6 +29,7 @@ class Config:
     intermediate_channels = None
     meta_data_index = None
     test_name = None
+    scheme = None
 
     def __init__(self):
         parser = argparse.ArgumentParser(description='ScribbleSeg expert annotation pipeline')
@@ -69,3 +70,9 @@ class Config:
         self.meta_data_index = ['test_name', 'seed', 'dataset', 'sample', 'n_pcs', 'scribble', 'max_iter', 'sim', 'miu', 'niu', 'scheme', 'lr', 'nConv', 'no_of_scribble_layers', 'intermediate_channels', 'added_layers', 'last_layer_channel_count', 'hyper_sum_division']
 
         self.test_name = f'{self.test_folder_base_name}_itr_{self.max_iter}'
+
+        if self.scribble:
+            if self.expert_scribble: self.scheme = 'Expert_scribble'
+            elif self.mclust_scribble: self.scheme = 'Mclust_scribble'
+            else: self.scheme = 'Other_scribble'
+        else: self.scheme = 'No_scribble'
