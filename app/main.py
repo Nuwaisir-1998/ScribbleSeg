@@ -1,3 +1,4 @@
+from helpers import calc_ari, make_str
 from init import *
 from config import *
 from modelbuilder import BruitForceModelBuilder
@@ -41,9 +42,7 @@ for model in tqdm(models):
     with open(paths.map_pixel_to_grid_spot_file_path, 'r') as f:
         map_pixel_to_grid_spot = json.load(f)
 
-    # %%
-    def make_str(x):
-        return f'({x[0]}, {x[1]})'
+
 
     def get_grid_spots_from_pixels(pixels, colors):
         grid_spots = np.array([map_pixel_to_grid_spot[make_str(pixel)] for pixel in pixels if make_str(pixel) in map_pixel_to_grid_spot])
@@ -51,12 +50,7 @@ for model in tqdm(models):
         return grid_spots, predicted_colors
 
     # %%
-    def calc_ari(df_1, df_2):
-        df_merged = pd.merge(df_1, df_2, left_index=True, right_index=True).dropna()
-        cols = df_merged.columns
-        for col in cols:
-            df_merged[col] = df_merged[col].values.astype('int')
-        return adjusted_rand_score(df_merged[cols[0]].values, df_merged[cols[1]].values)
+    
 
     # %%
     torch.manual_seed(model.seed)
@@ -401,6 +395,4 @@ for model in tqdm(models):
     plt.savefig(f'{paths.leaf_output_folder_path}/seg_{model.stepsize_sim}_{model.stepsize_con}_{model.stepsize_scr}_seed_{model.seed}_pcs_{Config.n_pcs}.eps',format='eps',dpi=1200,bbox_inches='tight',pad_inches=0)
 
     plt.close('all')
-
-
 
