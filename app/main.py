@@ -1,4 +1,5 @@
-from helpers import calc_ari, make_str
+from cnnmodel import MyNet
+from helpers import *
 from init import *
 from config import *
 from modelbuilder import BruitForceModelBuilder
@@ -34,59 +35,17 @@ for model in tqdm(models):
     df_barcode_labels_per_itr = pd.DataFrame(index = pixel_barcode[pixel_barcode != ''])
     backgrounds = np.load(paths.background)
     foregrounds = np.load(paths.foreground)
-
-    # %%
     
-
     # %%
     with open(paths.map_pixel_to_grid_spot_file_path, 'r') as f:
         map_pixel_to_grid_spot = json.load(f)
 
-
-
-    def get_grid_spots_from_pixels(pixels, colors):
-        grid_spots = np.array([map_pixel_to_grid_spot[make_str(pixel)] for pixel in pixels if make_str(pixel) in map_pixel_to_grid_spot])
-        predicted_colors = [colors[i] for i in range(len(pixels)) if make_str(pixels[i]) in map_pixel_to_grid_spot]
-        return grid_spots, predicted_colors
-
-    # %%
-    
 
     # %%
     torch.manual_seed(model.seed)
     np.random.seed(model.seed)
 
     no_of_scribble_layers = 0
-
-    # CNN model
-    class MyNet(nn.Module):
-        def __init__(self,input_dim):
-            super(MyNet, self).__init__()
-            self.conv1 = nn.Conv2d(input_dim, Config.intermediate_channels, kernel_size=3, stride=1, padding=1 )
-            self.bn1 = nn.BatchNorm2d(Config.intermediate_channels)
-            self.conv2 = nn.ModuleList()
-            self.bn2 = nn.ModuleList()
-            for i in range(Config.nConv-1):
-                self.conv2.append( nn.Conv2d(Config.intermediate_channels, Config.intermediate_channels, kernel_size=3, stride=1, padding=1 ) )
-                self.bn2.append( nn.BatchNorm2d(Config.intermediate_channels) )
-
-            r = last_layer_channel_count
-
-            print('last layer size:', r)
-            self.conv3 = nn.Conv2d(Config.intermediate_channels, r, kernel_size=1, stride=1, padding=0 )
-            self.bn3 = nn.BatchNorm2d(r)
-
-        def forward(self, x):
-            x = self.conv1(x)
-            x = F.relu( x )
-            x = self.bn1(x)
-            for i in range(Config.nConv-1):
-                x = self.conv2[i](x)
-                x = F.relu( x )
-                x = self.bn2[i](x)
-            x = self.conv3(x)
-            x = self.bn3(x)
-            return x
 
     # %%
     im = np.load(input)
@@ -103,14 +62,7 @@ for model in tqdm(models):
     data.shape
 
     # %%
-    def relabel_mask(mask, background_val):
-        row, col = mask.shape
-        mask = mask.reshape(-1)
-        values = np.unique(mask[mask != background_val])
-        lookup = {k: v for v, k in enumerate(dict.fromkeys(values))}
-        lookup[background_val] = background_val
-        mask = np.array([lookup[i] for i in mask])
-        return mask.reshape(row, col)
+    
 
     # %%
     # load scribble
@@ -180,7 +132,7 @@ for model in tqdm(models):
 
     # %%
     # train
-    model = MyNet( data.size(1) )
+    model = MyNet( data.size(1) , last_layer_channel_count)
     if Config.use_cuda:
         model.cuda()
     model.train()
@@ -288,7 +240,7 @@ for model in tqdm(models):
         
             im_cluster_num = im_target.reshape(im.shape[0], im.shape[1])
             labels = im_cluster_num[pixel_rows_cols[:, 0], pixel_rows_cols[:, 1]]
-            grid_spots, colors = get_grid_spots_from_pixels(pixel_rows_cols, labels)
+            grid_spots, colors = get_grid_spots_from_pixels(pixel_rows_cols, labels, map_pixel_to_grid_spot)
             if Config.dataset == 'Custom': rad = 700
             else: rad = 10
             plt.figure(figsize=(5.5,5))
@@ -356,7 +308,7 @@ for model in tqdm(models):
     im_target_rgb = im_target_rgb.reshape( np.array([im.shape[0],im.shape[1],3]).astype( np.uint8 ))
     im_cluster_num = im_target.reshape(im.shape[0], im.shape[1])
     labels = im_cluster_num[pixel_rows_cols[:, 0], pixel_rows_cols[:, 1]]
-    grid_spots, colors = get_grid_spots_from_pixels(pixel_rows_cols, labels)
+    grid_spots, colors = get_grid_spots_from_pixels(pixel_rows_cols, labels, map_pixel_to_grid_spot)
 
     df_ari_per_itr = pd.DataFrame({'ARI': ari_per_itr})
     df_ari_per_itr.to_csv(f'{paths.leaf_output_folder_path}/ari_per_itr.csv')
